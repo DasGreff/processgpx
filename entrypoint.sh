@@ -2,6 +2,9 @@
 
 # Script entrypoint pour processGPX
 
+perl processGPX -v
+echo "--------------------------------"
+
 case "$1" in
     "random")
         echo "🎲 Génération d'un fichier GPX aléatoire..."
