@@ -1,12 +1,7 @@
 name: Docker Image CI
-permissions:
-  contents: read
 
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
 
@@ -17,4 +12,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag processgpx:latest
+      run: |
+        docker build . --file Dockerfile --tag processgpx:latest
+        docker push dasgreff/processgpx:latest
