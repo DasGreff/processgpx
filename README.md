@@ -1,6 +1,6 @@
 # ProcessGPX Container
 
-Docker container for processing GPX files using the [processGPX](https://github.com/djconnel/processGPX) tool.
+Docker container for processing GPX files using the [processGPX](https://github.com/djconnel/processGPX) by djconnel - an advanced Perl tool for GPX file analysis and processing.
 
 ## Features
 
@@ -46,7 +46,3 @@ docker run -v /home/user/tracks:/tmp --rm dasgreff/processgpx:latest process -au
 - **No GPX files found**: Check that `.gpx` files exist in the mounted folder
 - **Permission errors**: Ensure the mounted folder has proper read/write permissions
 - **Generation failed**: Check container logs for error details
-
-## About
-
-Uses [processGPX](https://github.com/djconnel/processGPX) by djconnel - an advanced Perl tool for GPX file analysis and processing.
