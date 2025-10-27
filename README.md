@@ -28,6 +28,8 @@ docker run -v /path/to/gpx/files:/tmp --rm dasgreff/processgpx:latest process -a
 ### Common Options
 - `-auto` : Automatic mode with optimal settings
 - `-smooth <meters>` : Smooth position/altitude data
+- `-smoothZ <meters>` : Altitude smoothing only
+- `-fixSteps` : Fix identical altitude points from Strava Route Editor
 - `-prune` : Remove redundant points
 - `-quiet` : Silent mode
 
