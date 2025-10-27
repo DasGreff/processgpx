@@ -1,61 +1,61 @@
 #!/bin/bash
 
-# Script entrypoint pour processGPX
+# Entrypoint script for processGPX
 
 perl processGPX -v
 echo "--------------------------------"
 
 case "$1" in
     "random")
-        echo "🎲 Génération d'un fichier GPX aléatoire..."
+        echo "🎲 Generating random GPX file..."
         perl makeRandomRoute
         if [ -f "randomRoute.gpx" ]; then
             mv randomRoute.gpx /tmp/
-            echo "✅ Fichier randomRoute.gpx généré et déplacé vers /tmp/"
+            echo "✅ File randomRoute.gpx generated"
         else
-            echo "❌ Erreur: Fichier randomRoute.gpx non généré"
+            echo "❌ Error: File randomRoute.gpx not generated"
             exit 1
         fi
         ;;
     "process")
-        echo "🔄 Traitement des fichiers GPX..."
+        echo "🔄 Processing GPX files..."
         gpx_files=$(find /tmp/ -name "*.gpx" ! -name "*_processed*" ! -name ".*" 2>/dev/null)
         if [ -z "$gpx_files" ]; then
-            echo "❌ Aucun fichier GPX à traiter trouvé dans /tmp/"
+            echo "❌ No GPX files to process found"
             exit 1
         fi
-        echo "📁 Fichiers trouvés:"
+        echo "📁 Files found:"
         echo "$gpx_files"
         
-        # Gestion des options supplémentaires
-        shift  # Retire "process" des arguments
+        # Handle additional options
+        shift  # Remove "process" from arguments
         if [ $# -gt 0 ]; then
-            echo "🔧 Options supplémentaires: $*"
+            echo "🔧 Additional options: $*"
             perl processGPX $* $gpx_files
         else
             perl processGPX -auto $gpx_files
         fi
-        echo "✅ Traitement terminé"
+        echo "✅ Processing completed"
         ;;
     *)
         echo "Usage: docker run [options] dasgreff/processgpx [random|process [processGPX_options]]"
         echo ""
-        echo "Commandes disponibles:"
-        echo "  random            - Génère un fichier GPX aléatoire"
-        echo "  process [options] - Traite les fichiers GPX existants"
+        echo "Available commands:"
+        echo "  random            - Generate a random GPX file"
+        echo "  process [options] - Process existing GPX files"
         echo ""
-        echo "Options processGPX principales:"
-        echo "  -smooth <m>     - Lissage position/altitude (ex: -smooth 10)"
-        echo "  -smoothZ <m>    - Lissage altitude uniquement (ex: -smoothZ 20)"
-        echo "  -spacing <m>    - Espacement entre points (ex: -spacing 5)"
-        echo "  -autoSpacing    - Espacement automatique dans les virages"
-        echo "  -prune          - Supprime les points inutiles"
-        echo "  -loop           - Traite comme un circuit bouclé"
+        echo "Main processGPX options:"
+        echo "  -smooth <m>     - Position/altitude smoothing (ex: -smooth 10)"
+        echo "  -smoothZ <m>    - Altitude smoothing only (ex: -smoothZ 20)"
+        echo "  -spacing <m>    - Spacing between points (ex: -spacing 5)"
+        echo "  -autoSpacing    - Automatic spacing in turns"
+        echo "  -prune          - Remove unnecessary points"
+        echo "  -loop           - Treat as a closed circuit"
         echo ""
-        echo "Exemples:"
-        echo "  docker run -v <votre_dossier_GPX>:/tmp --rm dasgreff/processgpx random"
-        echo "  docker run -v <votre_dossier_GPX>:/tmp --rm dasgreff/processgpx process"
-        echo "  docker run -v <votre_dossier_GPX>:/tmp --rm dasgreff/processgpx process -smooth 10 -prune"
+        echo "Examples:"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process -smooth 10 -prune"
         exit 1
         ;;
 esac
