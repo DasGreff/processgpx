@@ -7,11 +7,29 @@ echo "--------------------------------"
 
 case "$1" in
     "random")
-        echo "🎲 Generating random GPX file..."
-        perl makeRandomRoute
+        # Déterminer les coordonnées et le message
+        if [ "$2" = "random" ]; then
+            lat=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -90 + rand() * 180 }')
+            lon=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -180 + rand() * 360 }')
+            echo "🌍 Generating random GPX file at random position: lat=$lat, lon=$lon"
+            perl makeRandomRoute --lat0="$lat" --lon0="$lon"
+            success_msg="✅ File randomRoute.gpx generated at random coordinates ($lat, $lon)"
+        elif [ -n "$2" ] && [ -n "$3" ]; then
+            lat="$2"
+            lon="$3"
+            echo "🌍 Generating random GPX file at position: lat=$lat, lon=$lon"
+            perl makeRandomRoute --lat0="$lat" --lon0="$lon"
+            success_msg="✅ File randomRoute.gpx generated at coordinates ($lat, $lon)"
+        else
+            echo "🎲 Generating random GPX file..."
+            perl makeRandomRoute
+            success_msg="✅ File randomRoute.gpx generated"
+        fi
+        
+        # Vérifier le résultat et déplacer le fichier
         if [ -f "randomRoute.gpx" ]; then
             mv randomRoute.gpx /tmp/
-            echo "✅ File randomRoute.gpx generated"
+            echo "$success_msg"
         else
             echo "❌ Error: File randomRoute.gpx not generated"
             exit 1
@@ -38,11 +56,13 @@ case "$1" in
         echo "✅ Processing completed"
         ;;
     *)
-        echo "Usage: docker run [options] dasgreff/processgpx [random|process [processGPX_options]]"
+        echo "Usage: docker run [options] dasgreff/processgpx [random [random|lat lon]|process [processGPX_options]]"
         echo ""
         echo "Available commands:"
-        echo "  random            - Generate a random GPX file"
-        echo "  process [options] - Process existing GPX files"
+        echo "  random             - Generate a random GPX file (default location: Bonneville Salt Flats)"
+        echo "  random random      - Generate a random GPX file at random coordinates"
+        echo "  random lat lon     - Generate a random GPX file at specified coordinates"
+        echo "  process [options]  - Process existing GPX files"
         echo ""
         echo "Main processGPX options:"
         echo "  -smooth <m>     - Position/altitude smoothing (ex: -smooth 10)"
@@ -54,6 +74,8 @@ case "$1" in
         echo ""
         echo "Examples:"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process -smooth 10 -prune"
         exit 1

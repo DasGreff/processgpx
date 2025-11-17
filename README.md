@@ -4,7 +4,9 @@ Docker container for processing GPX files using the [processGPX](https://github.
 
 ## Features
 
-- 🎲 Generate random GPX routes
+- 🎲 Generate random GPX routes at default location
+- 🌍 Generate random GPX routes at specific coordinates  
+- 🎯 Generate random GPX routes at completely random worldwide locations
 - 🔄 Process and optimize existing GPX files  
 - 📊 Calculate distance, speed, elevation statistics
 - 🐳 Easy Docker deployment
@@ -12,8 +14,20 @@ Docker container for processing GPX files using the [processGPX](https://github.
 ## Usage
 
 ### Generate Random Route
+
+#### Default location (Bonneville Salt Flats)
 ```bash
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random
+```
+
+#### Random coordinates anywhere on Earth
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random random
+```
+
+#### Specific coordinates
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522
 ```
 
 ### Process Existing GPX Files
@@ -36,8 +50,14 @@ docker run -v /path/to/gpx/files:/tmp --rm dasgreff/processgpx:latest process -a
 ## Examples
 
 ```bash
-# Generate random route in current directory
+# Generate random route at default location (Bonneville Salt Flats)
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random
+
+# Generate random route at completely random coordinates
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random random
+
+# Generate random route at specific coordinates (Chamonix, France)
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522
 
 # Process all GPX files with optimization
 docker run -v /home/user/tracks:/tmp --rm dasgreff/processgpx:latest process -auto -prune
