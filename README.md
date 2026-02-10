@@ -40,7 +40,7 @@ docker run -v /path/to/gpx/files:/tmp --rm dasgreff/processgpx:latest process -a
 ```
 
 ### Process BT Route
-Process routes from BTrack using the route ID (numerics only):
+Process routes from Biketerra using the route ID (numerics only):
 ```bash
 # Basic BT Route processing
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btroute 1234
@@ -50,7 +50,7 @@ docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btroute 1234 
 ```
 
 ### Process BT GPX
-Process existing BT GPX files using the route ID (numerics only):
+Process existing Biketerra GPX files using the route ID (numerics only):
 ```bash
 # Basic BT GPX processing
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btgpx 5678
@@ -69,7 +69,7 @@ docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btgpx 5678 -s
 
 ### Route ID Requirements
 - For `btroute` and `btgpx` commands, the Route ID must contain **only digits** (0-9)
-- Route IDs are used to fetch data from BTrack services
+- Route IDs are used to fetch data from Biketerra services
 
 ## Examples
 
