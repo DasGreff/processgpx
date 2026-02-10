@@ -55,6 +55,48 @@ case "$1" in
         fi
         echo "✅ Processing completed"
         ;;
+    "btroute")
+        if [ -z "$2" ]; then
+            echo "❌ Error: Route ID is required for btroute"
+            exit 1
+        fi
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: Route ID must contain only digits"
+            exit 1
+        fi
+        route_id="$2"
+        shift 2  # Remove "btroute" and Route_ID from arguments
+        
+        echo "🔄 Processing BT Route: $route_id"
+        if [ $# -gt 0 ]; then
+            echo "🔧 Additional options: $*"
+            perl processGPX $* BTRoute:$route_id -out $route_id.gpx
+        else
+            perl processGPX -auto BTRoute:$route_id -out $route_id.gpx
+        fi
+        echo "✅ Processing completed"
+        ;;
+    "btgpx")
+        if [ -z "$2" ]; then
+            echo "❌ Error: Route ID is required for btgpx"
+            exit 1
+        fi
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: Route ID must contain only digits"
+            exit 1
+        fi
+        route_id="$2"
+        shift 2  # Remove "btgpx" and Route_ID from arguments
+        
+        echo "🔄 Processing BT GPX: $route_id"
+        if [ $# -gt 0 ]; then
+            echo "🔧 Additional options: $*"
+            perl processGPX $* BTGPX:$route_id -out $route_id.gpx
+        else
+            perl processGPX -auto BTGPX:$route_id -out $route_id.gpx
+        fi
+        echo "✅ Processing completed"
+        ;;
     *)
         echo "Usage: docker run [options] dasgreff/processgpx [random [random|lat lon]|process [processGPX_options]]"
         echo ""
@@ -63,6 +105,7 @@ case "$1" in
         echo "  random random      - Generate a random GPX file at random coordinates"
         echo "  random lat lon     - Generate a random GPX file at specified coordinates"
         echo "  process [options]  - Process existing GPX files"
+        echo "  (btroute|btgpx) <Route_ID> [options] - Process existing BT Route"
         echo ""
         echo "Main processGPX options:"
         echo "  -smooth <m>     - Position/altitude smoothing (ex: -smooth 10)"
@@ -78,6 +121,8 @@ case "$1" in
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process -smooth 10 -prune"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (btroute|btgpx) 1234"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (btroute|btgpx) 1234 -smooth 10 -prune"
         exit 1
         ;;
 esac

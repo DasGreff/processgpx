@@ -39,6 +39,26 @@ docker run -v /path/to/gpx/files:/tmp --rm dasgreff/processgpx:latest process
 docker run -v /path/to/gpx/files:/tmp --rm dasgreff/processgpx:latest process -auto -prune
 ```
 
+### Process BT Route
+Process routes from BTrack using the route ID (numerics only):
+```bash
+# Basic BT Route processing
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btroute 1234
+
+# With options
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btroute 1234 -auto -prune
+```
+
+### Process BT GPX
+Process existing BT GPX files using the route ID (numerics only):
+```bash
+# Basic BT GPX processing
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btgpx 5678
+
+# With options
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btgpx 5678 -smooth 10
+```
+
 ### Common Options
 - `-auto` : Automatic mode with optimal settings
 - `-smooth <meters>` : Smooth position/altitude data
@@ -46,6 +66,10 @@ docker run -v /path/to/gpx/files:/tmp --rm dasgreff/processgpx:latest process -a
 - `-fixSteps` : Fix identical altitude points from Strava Route Editor
 - `-prune` : Remove redundant points
 - `-quiet` : Silent mode
+
+### Route ID Requirements
+- For `btroute` and `btgpx` commands, the Route ID must contain **only digits** (0-9)
+- Route IDs are used to fetch data from BTrack services
 
 ## Examples
 
@@ -61,6 +85,18 @@ docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522
 
 # Process all GPX files with optimization
 docker run -v /home/user/tracks:/tmp --rm dasgreff/processgpx:latest process -auto -prune
+
+# Process BT Route with ID 10399
+docker run -v /share/Public/GPX:/tmp --rm dasgreff/processgpx:latest btroute 10399
+
+# Process BT Route with smoothing
+docker run -v /share/Public/GPX:/tmp --rm dasgreff/processgpx:latest btroute 10399 -smooth 10 -prune
+
+# Process BT GPX with ID 5678
+docker run -v /share/Public/GPX:/tmp --rm dasgreff/processgpx:latest btgpx 5678
+
+# Process BT GPX with options
+docker run -v /share/Public/GPX:/tmp --rm dasgreff/processgpx:latest btgpx 5678 -auto
 ```
 
 ## Troubleshooting
@@ -68,3 +104,5 @@ docker run -v /home/user/tracks:/tmp --rm dasgreff/processgpx:latest process -au
 - **No GPX files found**: Check that `.gpx` files exist in the mounted folder
 - **Permission errors**: Ensure the mounted folder has proper read/write permissions
 - **Generation failed**: Check container logs for error details
+- **Invalid Route ID**: Route IDs for `btroute` and `btgpx` must be numeric only (e.g., `10399`, not `route_10399`)
+- **JSON module error**: Rebuild the Docker image if you encounter JSON.pm errors
