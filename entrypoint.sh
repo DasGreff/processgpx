@@ -70,9 +70,9 @@ case "$1" in
         echo "🔄 Processing BT Route: $route_id"
         if [ $# -gt 0 ]; then
             echo "🔧 Additional options: $*"
-            perl processGPX $* BTRoute:$route_id -out $route_id.gpx
+            perl processGPX $* BTRoute:$route_id -out /tmp/$route_id.gpx
         else
-            perl processGPX -auto BTRoute:$route_id -out $route_id.gpx
+            perl processGPX -auto BTRoute:$route_id -out /tmp/$route_id.gpx
         fi
         echo "✅ Processing completed"
         ;;
@@ -91,9 +91,9 @@ case "$1" in
         echo "🔄 Processing BT GPX: $route_id"
         if [ $# -gt 0 ]; then
             echo "🔧 Additional options: $*"
-            perl processGPX $* BTGPX:$route_id -out $route_id.gpx
+            perl processGPX $* BTGPX:$route_id -out /tmp/$route_id.gpx
         else
-            perl processGPX -auto BTGPX:$route_id -out $route_id.gpx
+            perl processGPX -auto BTGPX:$route_id -out /tmp/$route_id.gpx
         fi
         echo "✅ Processing completed"
         ;;
