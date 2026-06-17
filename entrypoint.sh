@@ -12,17 +12,35 @@ case "$1" in
             lat=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -90 + rand() * 180 }')
             lon=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -180 + rand() * 360 }')
             echo "🌍 Generating random GPX file at random position: lat=$lat, lon=$lon"
-            perl makeRandomRoute --lat0="$lat" --lon0="$lon"
+            shift 2  # Remove "random" and "random" from arguments
+            if [ $# -gt 0 ]; then
+                echo "🔧 Additional options: $*"
+                perl makeRandomRoute --lat0="$lat" --lon0="$lon" $*
+            else
+                perl makeRandomRoute --lat0="$lat" --lon0="$lon"
+            fi
             success_msg="✅ File randomRoute.gpx generated at random coordinates ($lat, $lon)"
         elif [ -n "$2" ] && [ -n "$3" ]; then
             lat="$2"
             lon="$3"
             echo "🌍 Generating random GPX file at position: lat=$lat, lon=$lon"
-            perl makeRandomRoute --lat0="$lat" --lon0="$lon"
+            shift 3  # Remove "random", lat, and lon from arguments
+            if [ $# -gt 0 ]; then
+                echo "🔧 Additional options: $*"
+                perl makeRandomRoute --lat0="$lat" --lon0="$lon" $*
+            else
+                perl makeRandomRoute --lat0="$lat" --lon0="$lon"
+            fi
             success_msg="✅ File randomRoute.gpx generated at coordinates ($lat, $lon)"
         else
             echo "🎲 Generating random GPX file..."
-            perl makeRandomRoute
+            shift  # Remove "random" from arguments
+            if [ $# -gt 0 ]; then
+                echo "🔧 Additional options: $*"
+                perl makeRandomRoute $*
+            else
+                perl makeRandomRoute
+            fi
             success_msg="✅ File randomRoute.gpx generated"
         fi
         
@@ -98,13 +116,14 @@ case "$1" in
         echo "✅ Processing completed"
         ;;
     *)
-        echo "Usage: docker run [options] dasgreff/processgpx [random [random|lat lon]|process [processGPX_options]]"
+        echo "Usage: docker run [options] dasgreff/processgpx [random [random|lat lon] [free_args]|process [processGPX_options]]"
         echo ""
         echo "Available commands:"
-        echo "  random             - Generate a random GPX file (default location: Bonneville Salt Flats)"
-        echo "  random random      - Generate a random GPX file at random coordinates"
-        echo "  random lat lon     - Generate a random GPX file at specified coordinates"
-        echo "  process [options]  - Process existing GPX files"
+        echo "  random                    - Generate a random GPX file (default location: Bonneville Salt Flats)"
+        echo "  random random             - Generate a random GPX file at random coordinates"
+        echo "  random lat lon            - Generate a random GPX file at specified coordinates"
+        echo "  random [random|lat lon] [free_args] - Generate with additional makeRandomRoute arguments"
+        echo "  process [options]         - Process existing GPX files"
         echo "  (btroute|btgpx) <Route_ID> [options] - Process existing BT Route"
         echo ""
         echo "Main processGPX options:"
@@ -119,6 +138,8 @@ case "$1" in
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522 --option1 value1"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random --option1 value1"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process -smooth 10 -prune"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (btroute|btgpx) 1234"
