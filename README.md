@@ -81,7 +81,7 @@ docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random random
 
 # Generate random route at specific coordinates (Chamonix, France)
-docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20
 
 # Process all GPX files with optimization
 docker run -v /home/user/tracks:/tmp --rm dasgreff/processgpx:latest process -auto -prune
