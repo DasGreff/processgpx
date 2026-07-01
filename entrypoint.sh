@@ -7,6 +7,7 @@ echo "--------------------------------"
 
 case "$1" in
     "random")
+        RANDOM_NAME=randomRoute_$(date +%s).gpx
         # Déterminer les coordonnées et le message
         if [ "$2" = "random" ]; then
             lat=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -90 + rand() * 180 }')
@@ -15,11 +16,11 @@ case "$1" in
             shift 2  # Remove "random" and "random" from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
-                perl makeRandomRoute --lat0="$lat" --lon0="$lon" $*
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" $*
             else
-                perl makeRandomRoute --lat0="$lat" --lon0="$lon"
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon"
             fi
-            success_msg="✅ File randomRoute.gpx generated at random coordinates ($lat, $lon)"
+            success_msg="✅ File $RANDOM_NAME generated at random coordinates ($lat, $lon)"
         elif [ -n "$2" ] && [ -n "$3" ]; then
             lat="$2"
             lon="$3"
@@ -27,29 +28,29 @@ case "$1" in
             shift 3  # Remove "random", lat, and lon from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
-                perl makeRandomRoute --lat0="$lat" --lon0="$lon" $*
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" $*
             else
-                perl makeRandomRoute --lat0="$lat" --lon0="$lon"
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon"
             fi
-            success_msg="✅ File randomRoute.gpx generated at coordinates ($lat, $lon)"
+            success_msg="✅ File $RANDOM_NAME generated at coordinates ($lat, $lon)"
         else
             echo "🎲 Generating random GPX file..."
             shift  # Remove "random" from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
-                perl makeRandomRoute $*
+                perl makeRandomRoute --out=$RANDOM_NAME $*
             else
-                perl makeRandomRoute
+                perl makeRandomRoute --out=$RANDOM_NAME
             fi
-            success_msg="✅ File randomRoute.gpx generated"
+            success_msg="✅ File $RANDOM_NAME generated"
         fi
         
         # Vérifier le résultat et déplacer le fichier
-        if [ -f "randomRoute.gpx" ]; then
-            mv randomRoute.gpx /tmp/
+        if [ -f "$RANDOM_NAME" ]; then
+            mv "$RANDOM_NAME" /tmp/
             echo "$success_msg"
         else
-            echo "❌ Error: File randomRoute.gpx not generated"
+            echo "❌ Error: File $RANDOM_NAME not generated"
             exit 1
         fi
         ;;
