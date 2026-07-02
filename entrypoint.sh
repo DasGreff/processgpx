@@ -5,6 +5,40 @@
 perl processGPX -v
 echo "--------------------------------"
 
+process_files() {
+    local ext="$1"
+    local bt_prefix="$2"
+    shift 2
+    echo "🔄 Processing ${ext^^} files..."
+    local files
+    files=$(find /tmp/ -name "*.${ext}" ! -name "*_processed*" ! -name ".*" 2>/dev/null)
+    if [ -z "$files" ]; then
+        echo "❌ No ${ext^^} files to process found"
+        exit 1
+    fi
+    echo "📁 Files found:"
+    echo "$files"
+    if [ -n "$bt_prefix" ]; then
+        while IFS= read -r file; do
+            local output="${file%.${ext}}_processed.gpx"
+            if [ $# -gt 0 ]; then
+                echo "🔧 Additional options: $*"
+                perl processGPX "${bt_prefix}:$file" $* -out "$output"
+            else
+                perl processGPX -auto "${bt_prefix}:$file" -out "$output"
+            fi
+        done <<< "$files"
+    else
+        if [ $# -gt 0 ]; then
+            echo "🔧 Additional options: $*"
+            perl processGPX $* $files
+        else
+            perl processGPX -auto $files
+        fi
+    fi
+    echo "✅ Processing completed"
+}
+
 process_bt_command() {
     local command_name="$1"
     local display_name="$2"
@@ -82,33 +116,18 @@ case "$1" in
         fi
         ;;
     "process")
-        echo "🔄 Processing GPX files..."
-        gpx_files=$(find /tmp/ -name "*.gpx" ! -name "*_processed*" ! -name ".*" 2>/dev/null)
-        if [ -z "$gpx_files" ]; then
-            echo "❌ No GPX files to process found"
-            exit 1
-        fi
-        echo "📁 Files found:"
-        echo "$gpx_files"
-        
-        # Handle additional options
-        shift  # Remove "process" from arguments
-        if [ $# -gt 0 ]; then
-            echo "🔧 Additional options: $*"
-            perl processGPX $* $gpx_files
-        else
-            perl processGPX -auto $gpx_files
-        fi
-        echo "✅ Processing completed"
+        shift
+        process_files "gpx" "" "$@"
+        ;;
+    "btjson")
+        shift
+        process_files "json" "BTJSON" "$@"
         ;;
     "btroute")
         process_bt_command "btroute" "BT Route" "BTRoute" "gpx" "$2" "${@:3}"
         ;;
     "btgpx")
         process_bt_command "btgpx" "BT GPX" "BTGPX" "gpx" "$2" "${@:3}"
-        ;;
-    "btjson")
-        process_bt_command "btjson" "BT JSON" "BTJSON" "json" "$2" "${@:3}"
         ;;
     *)
         echo "Usage: docker run [options] dasgreff/processgpx [random [random|lat lon] [free_args]|process [processGPX_options]]"
@@ -117,9 +136,9 @@ case "$1" in
         echo "  random                    - Generate a random GPX file (default location: Bonneville Salt Flats)"
         echo "  random random             - Generate a random GPX file at random coordinates"
         echo "  random lat lon            - Generate a random GPX file at specified coordinates"
-        echo "  random [random|lat lon] [free_args] - Generate with additional makeRandomRoute arguments"
-        echo "  process [options]         - Process existing GPX files"
-        echo "  (btroute|btjson) <Route_ID> [options] - Process existing BT Route"
+        echo "  random [random|lat lon] [free_args]  - Generate with additional makeRandomRoute arguments"
+        echo "  (process|btjson) [options]           - Process existing GPX or JSON files"
+        echo "  (btroute|btgpx) <Route_ID> [options] - Process existing BT Route"
         echo ""
         echo "Main processGPX options:"
         echo "  -smooth <m>     - Position/altitude smoothing (ex: -smooth 10)"
@@ -135,10 +154,10 @@ case "$1" in
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random --option1 value1"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx process -smooth 10 -prune"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (btroute|btjson) 1234"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (btroute|btjson) 1234 -smooth 10 -prune"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (process|btjson)"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (process|btjson) -smooth 10 -prune"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (btroute|btgpx) 1234"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (btroute|btgpx) 1234 -smooth 10 -prune"
         exit 1
         ;;
 esac
