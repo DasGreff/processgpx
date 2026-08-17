@@ -1,4 +1,4 @@
-FROM perl:5.43-slim-trixie
+FROM perl:5.44-slim-trixie
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
