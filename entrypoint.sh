@@ -66,6 +66,22 @@ process_bt_command() {
     echo "✅ Processing completed"
 }
 
+get_country_coordinates() {
+    local country_code="$1"
+    local coordinates
+
+    if ! [[ "$country_code" =~ ^[A-Za-z]{3}$ ]]; then
+        echo "❌ Error: Country code must be a three-letter ISO 3166-1 alpha-3 code" >&2
+        return 1
+    fi
+
+    if ! coordinates=$(/usr/local/bin/random-country-point "${country_code^^}"); then
+        return 1
+    fi
+
+    printf '%s\n' "$coordinates"
+}
+
 case "$1" in
     "random")
         RANDOM_NAME=randomRoute_$(date +%s).gpx
@@ -82,6 +98,20 @@ case "$1" in
                 perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon"
             fi
             success_msg="✅ File $RANDOM_NAME generated at random coordinates ($lat, $lon)"
+        elif [[ "$2" =~ ^[A-Za-z]{3}$ ]]; then
+            country_code="${2^^}"
+            if ! read -r lat lon < <(get_country_coordinates "$country_code"); then
+                exit 1
+            fi
+            echo "🌍 Generating random GPX file in country: $country_code (lat=$lat, lon=$lon)"
+            shift 2  # Remove "random" and the country code from arguments
+            if [ $# -gt 0 ]; then
+                echo "🔧 Additional options: $*"
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" "$@"
+            else
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon"
+            fi
+            success_msg="✅ File $RANDOM_NAME generated in $country_code around coordinates ($lat, $lon)"
         elif [ -n "$2" ] && [ -n "$3" ]; then
             lat="$2"
             lon="$3"
@@ -130,13 +160,14 @@ case "$1" in
         process_bt_command "btgpx" "BT GPX" "BTGPX" "gpx" "$2" "${@:3}"
         ;;
     *)
-        echo "Usage: docker run [options] dasgreff/processgpx [random [random|lat lon] [free_args]|process [processGPX_options]]"
+        echo "Usage: docker run [options] dasgreff/processgpx [random [random|ISO-3|lat lon] [free_args]|process [processGPX_options]]"
         echo ""
         echo "Available commands:"
         echo "  random                    - Generate a random GPX file (default location: Bonneville Salt Flats)"
         echo "  random random             - Generate a random GPX file at random coordinates"
+        echo "  random ISO-3              - Generate a random GPX file at a random location in an ISO 3166-1 alpha-3 country"
         echo "  random lat lon            - Generate a random GPX file at specified coordinates"
-        echo "  random [random|lat lon] [free_args]  - Generate with additional makeRandomRoute arguments"
+        echo "  random [random|ISO-3|lat lon] [free_args]  - Generate with additional makeRandomRoute arguments"
         echo "  (process|btjson) [options]           - Process existing GPX or JSON files"
         echo "  (btroute|btgpx) <Route_ID> [options] - Process existing BT Route"
         echo ""
@@ -151,6 +182,7 @@ case "$1" in
         echo "Examples:"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random FRA"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random --option1 value1"

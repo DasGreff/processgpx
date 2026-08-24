@@ -7,6 +7,7 @@ Docker container for processing GPX files using the [processGPX](https://github.
 - 🎲 Generate random GPX routes at default location
 - 🌍 Generate random GPX routes at specific coordinates  
 - 🎯 Generate random GPX routes at completely random worldwide locations
+- 🗺️ Generate random GPX routes from an ISO country code
 - 🔄 Process and optimize existing GPX files  
 - 📊 Calculate distance, speed, elevation statistics
 - 🐳 Easy Docker deployment
@@ -23,6 +24,12 @@ docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random
 #### Random coordinates anywhere on Earth
 ```bash
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random random
+```
+
+#### Country by ISO code
+Use a three-letter ISO 3166-1 alpha-3 country code. The starting point is selected randomly inside the country polygon from the embedded GeoJSON dataset.
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random FRA
 ```
 
 #### Specific coordinates
@@ -79,6 +86,9 @@ docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random
 
 # Generate random route at completely random coordinates
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random random
+
+# Generate random route in France
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random FRA
 
 # Generate random route at specific coordinates (Chamonix, France)
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20
