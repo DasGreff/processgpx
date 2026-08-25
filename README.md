@@ -32,6 +32,12 @@ Use a three-letter ISO 3166-1 alpha-3 country code. The starting point is select
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random FRA
 ```
 
+#### Random country
+Pick a random country from the embedded GeoJSON dataset (based on its list of ISO 3166-1 alpha-3 codes), then a random starting point inside it.
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random country
+```
+
 #### Specific coordinates
 ```bash
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522
@@ -89,6 +95,9 @@ docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random random
 
 # Generate random route in France
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random FRA
+
+# Generate random route in a randomly picked country
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random country
 
 # Generate random route at specific coordinates (Chamonix, France)
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20

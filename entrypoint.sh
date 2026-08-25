@@ -23,19 +23,20 @@ process_files() {
             local output="${file%.${ext}}_processed.gpx"
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
-                perl processGPX "${bt_prefix}:$file" $* -out "$output"
+                perl processGPX "${bt_prefix}:$file" $* -out "$output" >/dev/null 2>&1
             else
-                perl processGPX -auto "${bt_prefix}:$file" -out "$output"
+                perl processGPX -auto "${bt_prefix}:$file" -out "$output" >/dev/null 2>&1
             fi
         done <<< "$files"
     else
         if [ $# -gt 0 ]; then
             echo "🔧 Additional options: $*"
-            perl processGPX $* $files
+            perl processGPX $* $files >/dev/null 2>&1
         else
-            perl processGPX -auto $files
+            perl processGPX -auto $files >/dev/null 2>&1
         fi
     fi
+    chown 1000:1000 /tmp/*.gpx /tmp/*.json 2>/dev/null
     echo "✅ Processing completed"
 }
 
@@ -59,10 +60,11 @@ process_bt_command() {
     echo "🔄 Processing $display_name: $route_id"
     if [ $# -gt 0 ]; then
         echo "🔧 Additional options: $*"
-        perl processGPX "$@" "${source_prefix}:$route_id" -out "/tmp/${route_id}.${output_ext}"
+        perl processGPX "$@" "${source_prefix}:$route_id" -out "/tmp/${route_id}.${output_ext}" >/dev/null 2>&1
     else
-        perl processGPX -auto "${source_prefix}:$route_id" -out "/tmp/${route_id}.${output_ext}"
+        perl processGPX -auto "${source_prefix}:$route_id" -out "/tmp/${route_id}.${output_ext}" >/dev/null 2>&1
     fi
+    chown 1000:1000 /tmp/*.gpx /tmp/*.json 2>/dev/null
     echo "✅ Processing completed"
 }
 
@@ -70,7 +72,7 @@ get_country_coordinates() {
     local country_code="$1"
     local coordinates
 
-    if ! [[ "$country_code" =~ ^[A-Za-z]{3}$ ]]; then
+    if [ "$country_code" != "RANDOM" ] && ! [[ "$country_code" =~ ^[A-Za-z]{3}$ ]]; then
         echo "❌ Error: Country code must be a three-letter ISO 3166-1 alpha-3 code" >&2
         return 1
     fi
@@ -93,25 +95,38 @@ case "$1" in
             shift 2  # Remove "random" and "random" from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
-                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" $*
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" $* >/dev/null 2>&1
             else
-                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon"
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" >/dev/null 2>&1
             fi
-            success_msg="✅ File $RANDOM_NAME generated at random coordinates ($lat, $lon)"
-        elif [[ "$2" =~ ^[A-Za-z]{3}$ ]]; then
-            country_code="${2^^}"
-            if ! read -r lat lon < <(get_country_coordinates "$country_code"); then
+            success_msg="✅ File $RANDOM_NAME generated"
+        elif [[ "$2" =~ ^[Cc][Oo][Uu][Nn][Tt][Rr][Yy]$ ]]; then
+            if ! read -r lat lon country_code country_name < <(get_country_coordinates "RANDOM"); then
                 exit 1
             fi
-            echo "🌍 Generating random GPX file in country: $country_code (lat=$lat, lon=$lon)"
+            echo "🌍 Generating random GPX file in randomly picked country: $country_name ($country_code) (lat=$lat, lon=$lon)"
+            shift 2  # Remove "random" and "country" from arguments
+            if [ $# -gt 0 ]; then
+                echo "🔧 Additional options: $*"
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" "$@" >/dev/null 2>&1
+            else
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" >/dev/null 2>&1
+            fi
+            success_msg="✅ File $RANDOM_NAME generated"
+        elif [[ "$2" =~ ^[A-Za-z]{3}$ ]]; then
+            country_code="${2^^}"
+            if ! read -r lat lon country_code country_name < <(get_country_coordinates "$country_code"); then
+                exit 1
+            fi
+            echo "🌍 Generating random GPX file in country: $country_name ($country_code) (lat=$lat, lon=$lon)"
             shift 2  # Remove "random" and the country code from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
-                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" "$@"
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" "$@" >/dev/null 2>&1
             else
-                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon"
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" >/dev/null 2>&1
             fi
-            success_msg="✅ File $RANDOM_NAME generated in $country_code around coordinates ($lat, $lon)"
+            success_msg="✅ File $RANDOM_NAME generated"
         elif [ -n "$2" ] && [ -n "$3" ]; then
             lat="$2"
             lon="$3"
@@ -119,25 +134,26 @@ case "$1" in
             shift 3  # Remove "random", lat, and lon from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
-                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" $*
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" $* >/dev/null 2>&1
             else
-                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon"
+                perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" >/dev/null 2>&1
             fi
-            success_msg="✅ File $RANDOM_NAME generated at coordinates ($lat, $lon)"
+            success_msg="✅ File $RANDOM_NAME generated"
         else
             echo "🎲 Generating random GPX file..."
             shift  # Remove "random" from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
-                perl makeRandomRoute --out=$RANDOM_NAME $*
+                perl makeRandomRoute --out=$RANDOM_NAME $* >/dev/null 2>&1
             else
-                perl makeRandomRoute --out=$RANDOM_NAME
+                perl makeRandomRoute --out=$RANDOM_NAME >/dev/null 2>&1
             fi
             success_msg="✅ File $RANDOM_NAME generated"
         fi
         
         # Vérifier le résultat et déplacer le fichier
         if [ -f "$RANDOM_NAME" ]; then
+            chown 1000:1000 "$RANDOM_NAME"
             mv "$RANDOM_NAME" /tmp/
             echo "$success_msg"
         else
@@ -160,14 +176,15 @@ case "$1" in
         process_bt_command "btgpx" "BT GPX" "BTGPX" "gpx" "$2" "${@:3}"
         ;;
     *)
-        echo "Usage: docker run [options] dasgreff/processgpx [random [random|ISO-3|lat lon] [free_args]|process [processGPX_options]]"
+        echo "Usage: docker run [options] dasgreff/processgpx [random [random|country|ISO-3|lat lon] [free_args]|process [processGPX_options]]"
         echo ""
         echo "Available commands:"
         echo "  random                    - Generate a random GPX file (default location: Bonneville Salt Flats)"
         echo "  random random             - Generate a random GPX file at random coordinates"
+        echo "  random country            - Generate a random GPX file in a randomly picked country from the geojson dataset"
         echo "  random ISO-3              - Generate a random GPX file at a random location in an ISO 3166-1 alpha-3 country"
         echo "  random lat lon            - Generate a random GPX file at specified coordinates"
-        echo "  random [random|ISO-3|lat lon] [free_args]  - Generate with additional makeRandomRoute arguments"
+        echo "  random [random|country|ISO-3|lat lon] [free_args]  - Generate with additional makeRandomRoute arguments"
         echo "  (process|btjson) [options]           - Process existing GPX or JSON files"
         echo "  (btroute|btgpx) <Route_ID> [options] - Process existing BT Route"
         echo ""
@@ -182,6 +199,7 @@ case "$1" in
         echo "Examples:"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random country"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random FRA"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20"
