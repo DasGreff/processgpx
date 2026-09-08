@@ -100,7 +100,7 @@ case "$1" in
                 perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" >/dev/null 2>&1
             fi
             success_msg="✅ File $RANDOM_NAME generated"
-        elif [[ "$2" =~ ^[Cc][Oo][Uu][Nn][Tt][Rr][Yy]$ ]]; then
+        elif [[ "$2" = "country" ]]; then
             if ! read -r lat lon country_code country_name < <(get_country_coordinates "RANDOM"); then
                 exit 1
             fi
@@ -113,6 +113,9 @@ case "$1" in
                 perl makeRandomRoute --out=$RANDOM_NAME --lat0="$lat" --lon0="$lon" >/dev/null 2>&1
             fi
             success_msg="✅ File $RANDOM_NAME generated"
+        elif [[ "$2" = "list_country" ]]; then
+            echo "🌍 Listing all available countries:"
+            jq -r '.features | sort_by(.properties.name) | to_entries | map("\(.key + 1). \(.value.properties.name) : \(.value.properties."ISO3166-1-Alpha-3")") | .[]' ./countries.geojson
         elif [[ "$2" =~ ^[A-Za-z]{3}$ ]]; then
             country_code="${2^^}"
             if ! read -r lat lon country_code country_name < <(get_country_coordinates "$country_code"); then
@@ -152,13 +155,15 @@ case "$1" in
         fi
         
         # Vérifier le résultat et déplacer le fichier
-        if [ -f "$RANDOM_NAME" ]; then
-            chown 1000:1000 "$RANDOM_NAME"
-            mv "$RANDOM_NAME" /tmp/
-            echo "$success_msg"
-        else
-            echo "❌ Error: File $RANDOM_NAME not generated"
-            exit 1
+        if [[ "$2" != "list_country" ]]; then
+            if [ -f "$RANDOM_NAME" ]; then
+                chown 1000:1000 "$RANDOM_NAME"
+                mv "$RANDOM_NAME" /tmp/
+                echo "$success_msg"
+            else
+                echo "❌ Error: File $RANDOM_NAME not generated"
+                exit 1
+            fi
         fi
         ;;
     "process")
@@ -200,6 +205,7 @@ case "$1" in
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random country"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random list_country"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random FRA"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20"
