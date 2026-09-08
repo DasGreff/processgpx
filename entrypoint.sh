@@ -84,14 +84,29 @@ get_country_coordinates() {
     printf '%s\n' "$coordinates"
 }
 
+get_country_from_coordinates() {
+    local lat="$1"
+    local lon="$2"
+
+    if ! [[ "$lat" =~ ^-?[0-9]+\.?[0-9]*$ ]] || ! [[ "$lon" =~ ^-?[0-9]+\.?[0-9]*$ ]]; then
+        echo "❌ Error: Latitude and longitude must be valid numbers" >&2
+        return 1
+    fi
+
+    # Use Python script to check which country polygon contains the point
+    python3 /usr/local/bin/get_country_from_coordinates.py "$lat" "$lon"
+}
+
 case "$1" in
     "random")
-        RANDOM_NAME=randomRoute_$(date +%s).gpx
         # Déterminer les coordonnées et le message
         if [ "$2" = "random" ]; then
             lat=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -90 + rand() * 180 }')
             lon=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -180 + rand() * 360 }')
-            echo "🌍 Generating random GPX file at random position: lat=$lat, lon=$lon"
+            country_name=$(get_country_from_coordinates "$lat" "$lon")
+            country_code=$(echo "$country_name" | awk -F'[()]' '{print $2}')
+            RANDOM_NAME=randomRoute_$(date +%s)_$country_code.gpx
+            echo "🌍 Generating random GPX file at random position: lat=$lat, lon=$lon, $country_name"
             shift 2  # Remove "random" and "random" from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
@@ -104,7 +119,8 @@ case "$1" in
             if ! read -r lat lon country_code country_name < <(get_country_coordinates "RANDOM"); then
                 exit 1
             fi
-            echo "🌍 Generating random GPX file in randomly picked country: $country_name ($country_code) (lat=$lat, lon=$lon)"
+            RANDOM_NAME=randomRoute_$(date +%s)_$country_code.gpx
+            echo "🌍 Generating random GPX file in randomly picked country: $country_name ($country_code), lat=$lat, lon=$lon"
             shift 2  # Remove "random" and "country" from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
@@ -118,10 +134,11 @@ case "$1" in
             jq -r '.features | sort_by(.properties.name) | to_entries | map("\(.key + 1). \(.value.properties.name) : \(.value.properties."ISO3166-1-Alpha-3")") | .[]' /usr/local/share/countries.geojson
         elif [[ "$2" =~ ^[A-Za-z]{3}$ ]]; then
             country_code="${2^^}"
+            RANDOM_NAME=randomRoute_$(date +%s)_$country_code.gpx
             if ! read -r lat lon country_code country_name < <(get_country_coordinates "$country_code"); then
                 exit 1
             fi
-            echo "🌍 Generating random GPX file in country: $country_name ($country_code) (lat=$lat, lon=$lon)"
+            echo "🌍 Generating random GPX file in country: $country_name ($country_code), lat=$lat, lon=$lon"
             shift 2  # Remove "random" and the country code from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
@@ -133,7 +150,10 @@ case "$1" in
         elif [ -n "$2" ] && [ -n "$3" ]; then
             lat="$2"
             lon="$3"
-            echo "🌍 Generating random GPX file at position: lat=$lat, lon=$lon"
+            country_name=$(get_country_from_coordinates "$lat" "$lon")
+            country_code=$(echo "$country_name" | awk -F'[()]' '{print $2}')
+            RANDOM_NAME=randomRoute_$(date +%s)_$country_code.gpx
+            echo "🌍 Generating random GPX file at position: lat=$lat, lon=$lon, $country_name"
             shift 3  # Remove "random", lat, and lon from arguments
             if [ $# -gt 0 ]; then
                 echo "🔧 Additional options: $*"
@@ -143,6 +163,7 @@ case "$1" in
             fi
             success_msg="✅ File $RANDOM_NAME generated"
         else
+            RANDOM_NAME=randomRoute_$(date +%s).gpx
             echo "🎲 Generating random GPX file..."
             shift  # Remove "random" from arguments
             if [ $# -gt 0 ]; then
