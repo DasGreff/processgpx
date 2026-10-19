@@ -11,7 +11,7 @@ RUN apt update && \
     cpanm --notest --force Getopt::Long XML::Descent POSIX Date::Parse Pod::Usage Geo::Gpx JSON && \
     rm -rf /var/lib/apt/lists/* && \
     git clone https://github.com/djconnel/processGPX.git /opt/processGPX && \
-    chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/random-country-point /usr/local/bin/get_country_from_coordinates.py
+    chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/random-country-point.py /usr/local/bin/get_country_from_coordinates.py
 
 WORKDIR /opt/processGPX
 
