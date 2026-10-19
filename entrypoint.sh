@@ -77,7 +77,7 @@ get_country_coordinates() {
         return 1
     fi
 
-    if ! coordinates=$(/usr/local/bin/random-country-point "${country_code^^}"); then
+    if ! coordinates=$(/usr/local/bin/random-country-point.py "${country_code^^}"); then
         return 1
     fi
 

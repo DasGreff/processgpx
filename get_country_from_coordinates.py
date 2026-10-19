@@ -3,7 +3,6 @@
 import json
 import sys
 
-
 def contains_ring(point, ring):
     """Check if a point is inside a ring using ray casting algorithm."""
     longitude, latitude = point
@@ -19,13 +18,11 @@ def contains_ring(point, ring):
 
     return inside
 
-
 def contains_polygon(point, polygon):
     """Check if a point is inside a polygon (with holes support)."""
     return contains_ring(point, polygon[0]) and not any(
         contains_ring(point, hole) for hole in polygon[1:]
     )
-
 
 def main():
     if len(sys.argv) != 3:
@@ -67,7 +64,6 @@ def main():
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
