@@ -4,7 +4,6 @@ import json
 import random
 import sys
 
-
 def contains_ring(point, ring):
     longitude, latitude = point
     inside = False
@@ -19,12 +18,10 @@ def contains_ring(point, ring):
 
     return inside
 
-
 def contains_polygon(point, polygon):
     return contains_ring(point, polygon[0]) and not any(
         contains_ring(point, hole) for hole in polygon[1:]
     )
-
 
 def polygon_area(polygon):
     ring = polygon[0]
@@ -32,7 +29,6 @@ def polygon_area(polygon):
         longitude * next_latitude - next_longitude * latitude
         for (longitude, latitude), (next_longitude, next_latitude) in zip(ring, ring[1:] + ring[:1])
     )) / 2
-
 
 def random_point(polygon):
     ring = polygon[0]
@@ -49,7 +45,6 @@ def random_point(polygon):
             return point
 
     raise RuntimeError("unable to select a point within the country polygon")
-
 
 def main():
     if len(sys.argv) != 2:
@@ -90,7 +85,6 @@ def main():
     longitude, latitude = random_point(point)
     country_name = feature["properties"].get("name", country_code)
     print(f"{latitude:.4f} {longitude:.4f} {country_code} {country_name}")
-
 
 if __name__ == "__main__":
     try:
