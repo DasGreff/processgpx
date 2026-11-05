@@ -102,18 +102,11 @@ process_geometric_shape() {
     local shape_name="$1"
     local distance_value="$2"
     local generate_script="$3"
-    local display_name="$4"
-    local distance_label="$5"
-    shift 5
+    shift 3
     
     # Validate distance
-    if ! [[ "$distance_value" =~ ^[0-9]+\.?[0-9]*$ ]]; then
-        echo "❌ Error: ${distance_label} must be a positive number" >&2
-        exit 1
-    fi
-    
     if [ "$(echo "$distance_value <= 0" | awk '{print ($1 <= 0) ? "1" : "0"}')" = "1" ]; then
-        echo "❌ Error: ${distance_label} must be a positive number" >&2
+        echo "❌ Error: Distance must be a positive number" >&2
         exit 1
     fi
     
@@ -172,15 +165,15 @@ process_geometric_shape() {
     fi
     
     echo "🔄 Generating GPX $shape_name at: lat=$lat, lon=$lon, $country_name"
-    echo "📏 ${distance_label}: ${distance_value}km, Points: $num_points"
+    echo "📏 Distance: ${distance_value}km, Points: $num_points"
     
     if ! python3 "$generate_script" "$lat" "$lon" "$distance_value" "$num_points" "/tmp/$output_filename" >/dev/null 2>&1; then
-        echo "❌ Error: Failed to generate ${display_name} GPX file" >&2
+        echo "❌ Error: Failed to generate ${shape_name} GPX file" >&2
         exit 1
     fi
     
     chown 1000:1000 "/tmp/$output_filename" 2>/dev/null
-    echo "✅ GPX ${display_name} file generated: $output_filename"
+    echo "✅ GPX ${shape_name} file generated: $output_filename"
 }
 
 case "$1" in
@@ -288,26 +281,18 @@ case "$1" in
         process_bt_command "btgpx" "BT GPX" "BTGPX" "gpx" "$2" "${@:3}"
         ;;
     "circle"|"square")
-        local shape_name="$1"
+        shape_name="$1"
         shift
-        
+
         if [ $# -lt 1 ]; then
-            if [ "$shape_name" = "circle" ]; then
-                echo "❌ Error: Distance in kilometers is required for circle command" >&2
-                echo "Usage: circle <distance_km> [random|country|<ISO-3>|<lat> <lon>] [num_points] [output_filename]" >&2
-            else
-                echo "❌ Error: Perimeter in kilometers is required for square command" >&2
-                echo "Usage: square <perimeter_km> [random|country|<ISO-3>|<lat> <lon>] [num_points] [output_filename]" >&2
-            fi
+            echo "❌ Error: Distance in kilometers is required" >&2
+            echo "Usage: ${shape_name} <distance_km> [random|country|<ISO-3>|<lat> <lon>] [num_points] [output_filename]" >&2
             exit 1
         fi
-        
+        distance="$1"
+        shift
         # Set up parameters for the shape
-        if [ "$shape_name" = "circle" ]; then
-            process_geometric_shape "circle" "$1" "/usr/local/bin/generate_circle_gpx.py" "circle" "Circumference" "$@"
-        else
-            process_geometric_shape "square" "$1" "/usr/local/bin/generate_square_gpx.py" "square" "Perimeter" "$@"
-        fi
+        process_geometric_shape "${shape_name}" "${distance}" "/usr/local/bin/generate_${shape_name}_gpx.py" "$@"
         ;;
     *)
         echo "Usage: docker run [options] dasgreff/processgpx [random|circle|square|process|btjson|btroute|btgpx] [arguments]"
@@ -320,8 +305,6 @@ case "$1" in
         echo "  random lat lon            - Generate a random GPX file at specified coordinates"
         echo "  random [random|country|ISO-3|lat lon] [free_args]  - Generate with additional makeRandomRoute arguments"
         echo "  (circle|square) <distance> [random|country|<ISO-3>|<lat> <lon>] [num_points] [output_filename]"
-        echo "    - circle: distance = circumference in kilometers"
-        echo "    - square: distance = perimeter in kilometers"
         echo "  (process|btjson) [options]           - Process existing GPX or JSON files"
         echo "  (btroute|btgpx) <Route_ID> [options] - Process existing BT Route"
         echo ""
