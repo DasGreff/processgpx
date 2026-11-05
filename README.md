@@ -8,7 +8,8 @@ Docker container for processing GPX files using the [processGPX](https://github.
 - 🌍 Generate random GPX routes at specific coordinates  
 - 🎯 Generate random GPX routes at completely random worldwide locations
 - 🗺️ Generate random GPX routes from an ISO country code
-- 🔵 Generate circular GPX routes with custom radius
+- 🔵 Generate circular GPX routes with custom circumference
+- 🟨 Generate square GPX routes with custom perimeter
 - 🔄 Process and optimize existing GPX files  
 - 📊 Calculate distance, speed, elevation statistics
 - 🐳 Easy Docker deployment
@@ -80,6 +81,42 @@ docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest circle 45.856
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest circle 45.8566 6.8522 20 200 my_circle.gpx
 ```
 
+### Generate Square Route
+
+Generate a square GPX track with a specified perimeter (distance around the square). The square is created as a closed track with the start point at the middle of the top side.
+
+#### Default location (Bonneville Salt Flats) with perimeter
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest square 16
+```
+
+#### Random coordinates worldwide with perimeter
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest square random 25
+```
+
+#### Random country with perimeter
+Pick a random country from the embedded GeoJSON dataset, then a random point inside it as the square center.
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest square country 5
+```
+
+#### Country by ISO code with perimeter
+Use a three-letter ISO 3166-1 alpha-3 country code. The square center is selected randomly inside the country polygon.
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest square FRA 15
+```
+
+#### Specific coordinates with perimeter
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest square 45.8566 6.8522 20
+```
+
+#### With custom number of points and output filename
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest square 45.8566 6.8522 20 200 my_square.gpx
+```
+
 ### Process Existing GPX Files
 ```bash
 # Basic processing
@@ -147,19 +184,40 @@ docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522 
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 10
 
 # Generate 25km circle at random coordinates worldwide
-docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle random 25
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 25 random
 
 # Generate 5km circle in a random country
-docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle country 5
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 5 country
 
 # Generate 15km circle in France
-docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle FRA 15
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 15 FRA
 
 # Generate 20km circle at specific coordinates
-docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 45.8566 6.8522 20
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 20 45.8566 6.8522
 
 # Generate circle with custom parameters: 20km distance, 200 points, custom filename
-docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 45.8566 6.8522 20 200 my_circle.gpx
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 20 45.8566 6.8522 200 my_circle.gpx
+```
+
+### Square Route Examples
+```bash
+# Generate 16km perimeter square at default location
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest square 16
+
+# Generate 25km square at random coordinates worldwide
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest square 25 random
+
+# Generate 5km square in a random country
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest square 5 country
+
+# Generate 15km square in France
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest square 15 FRA
+
+# Generate 20km square at specific coordinates
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest square 20 45.8566 6.8522
+
+# Generate square with custom parameters: 20km perimeter, 200 points, custom filename
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest square 20 45.8566 6.8522 200 my_square.gpx
 ```
 
 ### Processing Examples

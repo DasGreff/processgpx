@@ -4,6 +4,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY random-country-point.py /usr/local/bin/random-country-point.py
 COPY get_country_from_coordinates.py /usr/local/bin/get_country_from_coordinates.py
 COPY generate_circle_gpx.py /usr/local/bin/generate_circle_gpx.py
+COPY generate_square_gpx.py /usr/local/bin/generate_square_gpx.py
 COPY countries.geojson /usr/local/share/countries.geojson
 
 RUN apt update && \
@@ -12,7 +13,7 @@ RUN apt update && \
     cpanm --notest --force Getopt::Long XML::Descent POSIX Date::Parse Pod::Usage Geo::Gpx JSON && \
     rm -rf /var/lib/apt/lists/* && \
     git clone https://github.com/djconnel/processGPX.git /opt/processGPX && \
-    chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/random-country-point.py /usr/local/bin/get_country_from_coordinates.py /usr/local/bin/generate_circle_gpx.py
+    chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/random-country-point.py /usr/local/bin/get_country_from_coordinates.py /usr/local/bin/generate_circle_gpx.py /usr/local/bin/generate_square_gpx.py
 
 WORKDIR /opt/processGPX
 
