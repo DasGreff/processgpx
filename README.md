@@ -8,6 +8,7 @@ Docker container for processing GPX files using the [processGPX](https://github.
 - 🌍 Generate random GPX routes at specific coordinates  
 - 🎯 Generate random GPX routes at completely random worldwide locations
 - 🗺️ Generate random GPX routes from an ISO country code
+- 🔵 Generate circular GPX routes with custom radius
 - 🔄 Process and optimize existing GPX files  
 - 📊 Calculate distance, speed, elevation statistics
 - 🐳 Easy Docker deployment
@@ -41,6 +42,42 @@ docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random countr
 #### Specific coordinates
 ```bash
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522
+```
+
+### Generate Circular Route
+
+Generate a perfect circle GPX track with a specified circumference (distance around the circle). The circle is created as a closed track with evenly spaced points.
+
+#### Default location (Bonneville Salt Flats) with distance
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest circle 10
+```
+
+#### Random coordinates worldwide with distance
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest circle random 25
+```
+
+#### Random country with distance
+Pick a random country from the embedded GeoJSON dataset, then a random point inside it as the circle center.
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest circle country 5
+```
+
+#### Country by ISO code with circumference
+Use a three-letter ISO 3166-1 alpha-3 country code. The circle center is selected randomly inside the country polygon.
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest circle FRA 15
+```
+
+#### Specific coordinates with circumference
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest circle 45.8566 6.8522 20
+```
+
+#### With custom number of points and output filename
+```bash
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest circle 45.8566 6.8522 20 200 my_circle.gpx
 ```
 
 ### Process Existing GPX Files
@@ -86,6 +123,7 @@ docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest btgpx 5678 -s
 
 ## Examples
 
+### Random Route Examples
 ```bash
 # Generate random route at default location (Bonneville Salt Flats)
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random
@@ -101,7 +139,31 @@ docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random country
 
 # Generate random route at specific coordinates (Chamonix, France)
 docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20
+```
 
+### Circular Route Examples
+```bash
+# Generate 10km circle at default location
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 10
+
+# Generate 25km circle at random coordinates worldwide
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle random 25
+
+# Generate 5km circle in a random country
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle country 5
+
+# Generate 15km circle in France
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle FRA 15
+
+# Generate 20km circle at specific coordinates
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 45.8566 6.8522 20
+
+# Generate circle with custom parameters: 20km distance, 200 points, custom filename
+docker run -v $(pwd):/tmp --rm dasgreff/processgpx:latest circle 45.8566 6.8522 20 200 my_circle.gpx
+```
+
+### Processing Examples
+```bash
 # Process all GPX files with optimization
 docker run -v /home/user/tracks:/tmp --rm dasgreff/processgpx:latest process -auto -prune
 
