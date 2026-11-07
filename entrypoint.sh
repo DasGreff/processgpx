@@ -97,7 +97,45 @@ get_country_from_coordinates() {
     python3 /usr/local/bin/get_country_from_coordinates.py "$lat" "$lon"
 }
 
-# Shared function for circle and square geometric shape generation
+resolve_shape_location() {
+    shape_lat=""
+    shape_lon=""
+    shape_country_code=""
+    shape_country_name=""
+    shape_location_arg_count=0
+
+    if [ $# -ge 1 ] && [ "$1" = "random" ]; then
+        shape_lat=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -90 + rand() * 180 }')
+        shape_lon=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -180 + rand() * 360 }')
+        shape_country_name=$(get_country_from_coordinates "$shape_lat" "$shape_lon")
+        shape_country_code=$(echo "$shape_country_name" | awk -F'[()]' '{print $2}')
+        shape_location_arg_count=1
+    elif [ $# -ge 1 ] && [ "$1" = "country" ]; then
+        if ! read -r shape_lat shape_lon shape_country_code shape_country_name < <(get_country_coordinates "RANDOM"); then
+            return 1
+        fi
+        shape_location_arg_count=1
+    elif [ $# -ge 1 ] && [[ "$1" =~ ^[A-Za-z]{3}$ ]]; then
+        local country_code="${1^^}"
+        if ! read -r shape_lat shape_lon shape_country_code shape_country_name < <(get_country_coordinates "$country_code"); then
+            return 1
+        fi
+        shape_location_arg_count=1
+    elif [ $# -ge 2 ] && [[ "$1" =~ ^-?[0-9]+\.?[0-9]*$ ]] && [[ "$2" =~ ^-?[0-9]+\.?[0-9]*$ ]]; then
+        shape_lat="$1"
+        shape_lon="$2"
+        shape_country_name=$(get_country_from_coordinates "$shape_lat" "$shape_lon")
+        shape_country_code=$(echo "$shape_country_name" | awk -F'[()]' '{print $2}')
+        shape_location_arg_count=2
+    else
+        shape_lat="40.7800"
+        shape_lon="-112.2200"
+        shape_country_code="USA"
+        shape_country_name="United States of America (USA)"
+    fi
+}
+
+# Shared function for circle sinusoid and square geometric shape generation
 process_geometric_shape() {
     local shape_name="$1"
     local distance_value="$2"
@@ -112,37 +150,15 @@ process_geometric_shape() {
 
     local output_filename=""
     local lat lon country_code country_name
-    
-    # Determine the location
-    if [ $# -ge 1 ] && [ "$1" = "random" ]; then
-        lat=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -90 + rand() * 180 }')
-        lon=$(awk -v seed="$RANDOM" 'BEGIN { srand(seed); printf "%.4f", -180 + rand() * 360 }')
-        country_name=$(get_country_from_coordinates "$lat" "$lon")
-        country_code=$(echo "$country_name" | awk -F'[()]' '{print $2}')
-        shift
-    elif [ $# -ge 1 ] && [ "$1" = "country" ]; then
-        if ! read -r lat lon country_code country_name < <(get_country_coordinates "RANDOM"); then
-            exit 1
-        fi
-        shift
-    elif [ $# -ge 1 ] && [[ "$1" =~ ^[A-Za-z]{3}$ ]]; then
-        country_code="${1^^}"
-        if ! read -r lat lon found_code country_name < <(get_country_coordinates "$country_code"); then
-            exit 1
-        fi
-        shift
-    elif [ $# -ge 2 ] && [[ "$1" =~ ^-?[0-9]+\.?[0-9]*$ ]] && [[ "$2" =~ ^-?[0-9]+\.?[0-9]*$ ]]; then
-        lat="$1"
-        lon="$2"
-        country_name=$(get_country_from_coordinates "$lat" "$lon")
-        country_code=$(echo "$country_name" | awk -F'[()]' '{print $2}')
-        shift 2
-    else
-        lat="40.7800"
-        lon="-112.2200"
-        country_code="USA"
-        country_name="United States of America (USA)"
+
+    if ! resolve_shape_location "$@"; then
+        exit 1
     fi
+    lat="$shape_lat"
+    lon="$shape_lon"
+    country_code="$shape_country_code"
+    country_name="$shape_country_name"
+    shift "$shape_location_arg_count"
     
     # Extract output_filename from remaining args
     while [ $# -gt 0 ]; do
@@ -162,7 +178,7 @@ process_geometric_shape() {
     
     echo "🔄 Generating GPX $shape_name at: lat=$lat, lon=$lon, $country_name"
     echo "📏 Distance: ${distance_value}km"
-    
+
     if ! python3 "$generate_script" "$lat" "$lon" "$distance_value" "/tmp/$output_filename" >/dev/null 2>&1; then
         echo "❌ Error: Failed to generate ${shape_name} GPX file" >&2
         exit 1
@@ -170,6 +186,39 @@ process_geometric_shape() {
     
     chown 1000:1000 "/tmp/$output_filename" 2>/dev/null
     echo "✅ GPX ${shape_name} file generated: $output_filename"
+}
+
+process_text_shape() {
+    local text="$1"
+    shift
+
+    if [ -z "$text" ]; then
+        echo "❌ Error: Text to draw is required" >&2
+        exit 1
+    fi
+
+    if ! resolve_shape_location "$@"; then
+        exit 1
+    fi
+    local lat="$shape_lat"
+    local lon="$shape_lon"
+    local country_code="$shape_country_code"
+    local country_name="$shape_country_name"
+    shift "$shape_location_arg_count"
+
+    local output_filename="${1:-}"
+    if [ -z "$output_filename" ]; then
+        output_filename="text_$(date +%s)_${country_code}.gpx"
+    fi
+
+    echo "🔄 Generating GPX text at: lat=$lat, lon=$lon, $country_name"
+    if ! python3 /usr/local/bin/generate_text_gpx.py "$lat" "$lon" "$text" "/tmp/$output_filename" >/dev/null 2>&1; then
+        echo "❌ Error: Failed to generate text GPX file" >&2
+        exit 1
+    fi
+
+    chown 1000:1000 "/tmp/$output_filename" 2>/dev/null
+    echo "✅ GPX text file generated: $output_filename"
 }
 
 case "$1" in
@@ -276,7 +325,7 @@ case "$1" in
     "btgpx")
         process_bt_command "btgpx" "BT GPX" "BTGPX" "gpx" "$2" "${@:3}"
         ;;
-    "circle"|"square")
+    "circle"|"square"|"sinusoid")
         shape_name="$1"
         shift
 
@@ -290,8 +339,17 @@ case "$1" in
         # Set up parameters for the shape
         process_geometric_shape "${shape_name}" "${distance}" "/usr/local/bin/generate_${shape_name}_gpx.py" "$@"
         ;;
+    "text")
+        shift
+        if [ $# -lt 1 ]; then
+            echo "❌ Error: Text to draw is required" >&2
+            echo "Usage: text \"<phrase>\" [random|country|<ISO-3>|<lat> <lon>] [output_filename]" >&2
+            exit 1
+        fi
+        process_text_shape "$@"
+        ;;
     *)
-        echo "Usage: docker run [options] dasgreff/processgpx [random|circle|square|process|btjson|btroute|btgpx] [arguments]"
+        echo "Usage: docker run [options] dasgreff/processgpx [random|circle|square|sinusoid|text|process|btjson|btroute|btgpx] [arguments]"
         echo ""
         echo "Available commands:"
         echo "  random                    - Generate a random GPX file (default location: Bonneville Salt Flats)"
@@ -300,7 +358,8 @@ case "$1" in
         echo "  random ISO-3              - Generate a random GPX file at a random location in an ISO 3166-1 alpha-3 country"
         echo "  random lat lon            - Generate a random GPX file at specified coordinates"
         echo "  random [random|country|ISO-3|lat lon] [free_args]  - Generate with additional makeRandomRoute arguments"
-        echo "  (circle|square) <distance> [random|country|<ISO-3>|<lat> <lon>] [output_filename]"
+        echo "  (circle|square|sinusoid) <distance> [random|country|<ISO-3>|<lat> <lon>] [output_filename]"
+        echo "  text \"<phrase>\" [random|country|<ISO-3>|<lat> <lon>] [output_filename]"
         echo "  (process|btjson) [options]           - Process existing GPX or JSON files"
         echo "  (btroute|btgpx) <Route_ID> [options] - Process existing BT Route"
         echo ""
@@ -312,7 +371,7 @@ case "$1" in
         echo "  -prune          - Remove unnecessary points"
         echo "  -loop           - Treat as a closed circuit"
         echo ""
-        echo "Location options (for circle and square):"
+        echo "Location options (for circle, square, sinusoid, and text):"
         echo "  random          - Random location worldwide"
         echo "  country         - Random country, then random point inside"
         echo "  <ISO-3>         - ISO 3166-1 alpha-3 country code (e.g., FRA, USA)"
@@ -327,16 +386,12 @@ case "$1" in
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random 45.8566 6.8522 --hollow --hexagon --L=100 --N=20"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx random random --option1 value1"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx circle 10"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx square 16"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx circle 25 random"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx square 25 random"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx circle 5 country"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx square 5 country"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx circle 15 FRA"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx square 15 FRA"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx circle 20 45.8566 6.8522"
-        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx square 20 45.8566 6.8522"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (circle|square|sinusoid) 16"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (circle|square|sinusoid) 25 random"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (circle|square|sinusoid) 5 country"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (circle|square|sinusoid) 15 FRA"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (circle|square|sinusoid) 20 45.8566 6.8522"
+        echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx text \"HELLO WORLD\" 45.8566 6.8522"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (process|btjson)"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (process|btjson) -smooth 10 -prune"
         echo "  docker run -v <your_GPX_folder>:/tmp --rm dasgreff/processgpx (btroute|btgpx) 1234"

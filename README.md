@@ -10,6 +10,7 @@ Docker container for processing GPX files using the [processGPX](https://github.
 - 🗺️ Generate random GPX routes from an ISO country code
 - 🔵 Generate circular GPX routes with custom circumference
 - 🟨 Generate square GPX routes with custom perimeter
+- ✍️ Generate GPX tracks that draw text
 - 🔄 Process and optimize existing GPX files  
 - 📊 Calculate distance, speed, elevation statistics
 - 🐳 Easy Docker deployment
@@ -116,6 +117,30 @@ docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest square 45.856
 ```bash
 docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest square 45.8566 6.8522 20 200 my_square.gpx
 ```
+
+### Draw Text as a GPX Track
+
+Draw a phrase on the map using 250-meter-high, widely spaced single-line letters. Quote the
+phrase so it is passed as one argument. The text is drawn eastward from the
+selected starting point; each pen stroke is stored as a separate track segment.
+The default location and the random, country, ISO-3, and explicit-coordinate
+options are the same as for the geometric shapes.
+
+```bash
+# Draw HELLO at the default location
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest text "HELLO"
+
+# Draw a phrase at a random worldwide location
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest text "HELLO WORLD" random
+
+# Draw text in France
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest text "BONJOUR" FRA
+
+# Draw text at explicit coordinates, with a custom output filename
+docker run -v /path/to/output:/tmp --rm dasgreff/processgpx:latest text "HELLO" 45.8566 6.8522 hello.gpx
+```
+
+Supported characters are A-Z, 0-9, spaces, and common punctuation (`. , ! ? - ' :`).
 
 ### Process Existing GPX Files
 ```bash
