@@ -109,8 +109,7 @@ process_geometric_shape() {
         echo "❌ Error: Distance must be a positive number" >&2
         exit 1
     fi
-    
-    local num_points=200
+
     local output_filename=""
     local lat lon country_code country_name
     
@@ -145,12 +144,9 @@ process_geometric_shape() {
         country_name="United States of America (USA)"
     fi
     
-    # Extract num_points and output_filename from remaining args
+    # Extract output_filename from remaining args
     while [ $# -gt 0 ]; do
-        if [[ "$1" =~ ^[0-9]+$ ]] && [ -z "$output_filename" ]; then
-            num_points="$1"
-            shift
-        elif [ -z "$output_filename" ]; then
+        if [ -z "$output_filename" ]; then
             output_filename="$1"
             shift
         else
@@ -165,9 +161,9 @@ process_geometric_shape() {
     fi
     
     echo "🔄 Generating GPX $shape_name at: lat=$lat, lon=$lon, $country_name"
-    echo "📏 Distance: ${distance_value}km, Points: $num_points"
+    echo "📏 Distance: ${distance_value}km"
     
-    if ! python3 "$generate_script" "$lat" "$lon" "$distance_value" "$num_points" "/tmp/$output_filename" >/dev/null 2>&1; then
+    if ! python3 "$generate_script" "$lat" "$lon" "$distance_value" "/tmp/$output_filename" >/dev/null 2>&1; then
         echo "❌ Error: Failed to generate ${shape_name} GPX file" >&2
         exit 1
     fi
@@ -286,7 +282,7 @@ case "$1" in
 
         if [ $# -lt 1 ]; then
             echo "❌ Error: Distance in kilometers is required" >&2
-            echo "Usage: ${shape_name} <distance_km> [random|country|<ISO-3>|<lat> <lon>] [num_points] [output_filename]" >&2
+            echo "Usage: ${shape_name} <distance_km> [random|country|<ISO-3>|<lat> <lon>] [output_filename]" >&2
             exit 1
         fi
         distance="$1"
@@ -304,7 +300,7 @@ case "$1" in
         echo "  random ISO-3              - Generate a random GPX file at a random location in an ISO 3166-1 alpha-3 country"
         echo "  random lat lon            - Generate a random GPX file at specified coordinates"
         echo "  random [random|country|ISO-3|lat lon] [free_args]  - Generate with additional makeRandomRoute arguments"
-        echo "  (circle|square) <distance> [random|country|<ISO-3>|<lat> <lon>] [num_points] [output_filename]"
+        echo "  (circle|square) <distance> [random|country|<ISO-3>|<lat> <lon>] [output_filename]"
         echo "  (process|btjson) [options]           - Process existing GPX or JSON files"
         echo "  (btroute|btgpx) <Route_ID> [options] - Process existing BT Route"
         echo ""

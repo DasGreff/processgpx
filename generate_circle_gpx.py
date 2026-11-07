@@ -5,7 +5,7 @@ import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 
-def generate_circle_gpx(lat, lon, circumference_km, num_points=100, filename=None):
+def generate_circle_gpx(lat, lon, circumference_km, filename=None):
     """
     Generate a GPX file with a circular track.
     
@@ -13,18 +13,23 @@ def generate_circle_gpx(lat, lon, circumference_km, num_points=100, filename=Non
         lat: Center latitude in decimal degrees
         lon: Center longitude in decimal degrees
         circumference_km: Circumference (distance around) of the circle in kilometers
-        num_points: Number of points to generate for the circle (default: 100)
         filename: Output filename (default: circle_lat_lon_circumference.gpx)
     
     Returns:
         Path to the generated GPX file
+    
+    Note: Points are generated every 50 meters along the circumference.
+    For example: 5km = 100 points, 30km = 600 points.
     """
     # Earth's radius in kilometers
     R = 6371.0
     
     # Calculate radius from circumference: radius = circumference / (2 * pi)
-    import math
     radius_km = circumference_km / (2 * math.pi)
+    
+    # Calculate number of points: one point every 50 meters
+    # num_points = (circumference in meters) / 50
+    num_points = int(circumference_km * 1000 / 50)
     
     if filename is None:
         filename = f"circle_{lat:.4f}_{lon:.4f}_{circumference_km}km.gpx"
@@ -47,7 +52,7 @@ def generate_circle_gpx(lat, lon, circumference_km, num_points=100, filename=Non
     name = ET.SubElement(trk, 'name')
     name.text = f'Circle at ({lat:.4f}, {lon:.4f}) - {circumference_km}km circumference'
     desc = ET.SubElement(trk, 'desc')
-    desc.text = f'Circular route with {num_points} points, circumference: {circumference_km}km'
+    desc.text = f'Circular route with {num_points} points (one every 50m), circumference: {circumference_km}km'
     
     trkseg = ET.SubElement(trk, 'trkseg')
     
@@ -92,12 +97,12 @@ def generate_circle_gpx(lat, lon, circumference_km, num_points=100, filename=Non
 
 def main():
     if len(sys.argv) < 4:
-        print("Usage: generate_circle_gpx.py <latitude> <longitude> <circumference_km> [num_points] [output_filename]", file=sys.stderr)
+        print("Usage: generate_circle_gpx.py <latitude> <longitude> <circumference_km> [output_filename]", file=sys.stderr)
         print("  latitude: Center latitude in decimal degrees", file=sys.stderr)
         print("  longitude: Center longitude in decimal degrees", file=sys.stderr)
         print("  circumference_km: Circumference (distance around) of the circle in kilometers", file=sys.stderr)
-        print("  num_points: Number of points (default: 100)", file=sys.stderr)
         print("  output_filename: Output GPX filename (optional)", file=sys.stderr)
+        print("  Note: Points are generated every 50 meters (e.g., 5km = 100 points, 30km = 600 points)", file=sys.stderr)
         sys.exit(1)
     
     try:
@@ -120,23 +125,12 @@ def main():
         print("Error: Longitude must be between -180 and 180", file=sys.stderr)
         sys.exit(1)
     
-    num_points = 100
-    if len(sys.argv) > 4:
-        try:
-            num_points = int(sys.argv[4])
-            if num_points < 3:
-                print("Error: num_points must be at least 3", file=sys.stderr)
-                sys.exit(1)
-        except ValueError:
-            print("Error: num_points must be an integer", file=sys.stderr)
-            sys.exit(1)
-    
     filename = None
-    if len(sys.argv) > 5:
-        filename = sys.argv[5]
+    if len(sys.argv) > 4:
+        filename = sys.argv[4]
     
     try:
-        output_file = generate_circle_gpx(lat, lon, circumference_km, num_points, filename)
+        output_file = generate_circle_gpx(lat, lon, circumference_km, filename)
         print(f"✅ GPX circle file generated: {output_file}")
         sys.exit(0)
     except Exception as e:

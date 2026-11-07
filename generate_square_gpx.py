@@ -35,7 +35,7 @@ def destination_point(lat, lon, distance_km, bearing_deg):
     
     return math.degrees(lat2), math.degrees(lon2)
 
-def generate_square_gpx(lat, lon, perimeter_km, num_points=100, filename=None):
+def generate_square_gpx(lat, lon, perimeter_km, filename=None):
     """
     Generate a GPX file with a square track.
     
@@ -48,16 +48,21 @@ def generate_square_gpx(lat, lon, perimeter_km, num_points=100, filename=None):
         lat: Start latitude (middle of top side) in decimal degrees
         lon: Start longitude (middle of top side) in decimal degrees
         perimeter_km: Perimeter (distance around) of the square in kilometers
-        num_points: Number of points to generate for the square (default: 100)
-                    Total points in GPX = num_points + 1 (including closing point)
         filename: Output filename (default: square_lat_lon_perimeter.gpx)
     
     Returns:
         Path to the generated GPX file
+    
+    Note: Points are generated every 50 meters along the perimeter.
+    For example: 5km = 100 points, 30km = 600 points.
     """
     R = 6371.0
     side_km = perimeter_km / 4
     half_side_km = side_km / 2
+    
+    # Calculate number of points: one point every 50 meters
+    # num_points = (perimeter in meters) / 50
+    num_points = int(perimeter_km * 1000 / 50)
     
     if filename is None:
         filename = f"square_{lat:.4f}_{lon:.4f}_{perimeter_km}km.gpx"
@@ -80,7 +85,7 @@ def generate_square_gpx(lat, lon, perimeter_km, num_points=100, filename=None):
     name = ET.SubElement(trk, 'name')
     name.text = f'Square at ({lat:.4f}, {lon:.4f}) - {perimeter_km}km perimeter'
     desc = ET.SubElement(trk, 'desc')
-    desc.text = f'Square route with {num_points} points, perimeter: {perimeter_km}km, side: {side_km:.2f}km, start at middle of top side'
+    desc.text = f'Square route with {num_points} points (one every 50m), perimeter: {perimeter_km}km, side: {side_km:.2f}km, start at middle of top side'
     
     trkseg = ET.SubElement(trk, 'trkseg')
     
@@ -148,12 +153,12 @@ def generate_square_gpx(lat, lon, perimeter_km, num_points=100, filename=None):
 
 def main():
     if len(sys.argv) < 4:
-        print("Usage: generate_square_gpx.py <latitude> <longitude> <perimeter_km> [num_points] [output_filename]", file=sys.stderr)
+        print("Usage: generate_square_gpx.py <latitude> <longitude> <perimeter_km> [output_filename]", file=sys.stderr)
         print("  latitude: Start latitude (middle of top side) in decimal degrees", file=sys.stderr)
         print("  longitude: Start longitude (middle of top side) in decimal degrees", file=sys.stderr)
         print("  perimeter_km: Perimeter (distance around) of the square in kilometers", file=sys.stderr)
-        print("  num_points: Number of points (default: 100)", file=sys.stderr)
         print("  output_filename: Output GPX filename (optional)", file=sys.stderr)
+        print("  Note: Points are generated every 50 meters (e.g., 5km = 100 points, 30km = 600 points)", file=sys.stderr)
         sys.exit(1)
     
     try:
@@ -176,23 +181,12 @@ def main():
         print("Error: Longitude must be between -180 and 180", file=sys.stderr)
         sys.exit(1)
     
-    num_points = 100
-    if len(sys.argv) > 4:
-        try:
-            num_points = int(sys.argv[4])
-            if num_points < 4:
-                print("Error: num_points must be at least 4", file=sys.stderr)
-                sys.exit(1)
-        except ValueError:
-            print("Error: num_points must be an integer", file=sys.stderr)
-            sys.exit(1)
-    
     filename = None
-    if len(sys.argv) > 5:
-        filename = sys.argv[5]
+    if len(sys.argv) > 4:
+        filename = sys.argv[4]
     
     try:
-        output_file = generate_square_gpx(lat, lon, perimeter_km, num_points, filename)
+        output_file = generate_square_gpx(lat, lon, perimeter_km, filename)
         print(f"✅ GPX square file generated: {output_file}")
         sys.exit(0)
     except Exception as e:
